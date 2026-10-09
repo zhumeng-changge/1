@@ -1,0 +1,36 @@
+# ===== 体积巨大的可重装依赖（约 516 MB，由 setup-sdk.ps1 自动下载）=====
+/android-sdk/
+build/android-sdk/
+
+# ===== 构建产物（可重新生成）=====
+build/out/
+*.idsig
+*.ap_
+
+# ===== 敏感文件：签名密钥绝不入库 =====
+# 注意：本目录下的 build/xizuo.keystore 是 APK 签名密钥
+# 一旦公开推送，任何人都能伪造你应用的签名，务必保持忽略
+*.keystore
+*.jks
+*.pem
+*.pk8
+
+# ===== 编辑器与系统 =====
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.DS_Store
+Thumbs.db
+
+# ===== 日志（本目录名为 guiLogs，日志文件绝不入库）=====
+*.log
+logs/
+guiLogs/
+crash-*.txt
+hs_err_pid*.log
+
+# ===== 临时文件 =====
+*.tmp
+~$*

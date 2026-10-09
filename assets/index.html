@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#11162a">
+<title>我的作息提醒 · 汤轩旗</title>
+
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="作息提醒">
+<style>
+:root{
+  --bg:#0d1120; --bg2:#151b30; --card:#1b2238; --card2:#222b45;
+  --line:#2c3555; --txt:#eef2ff; --dim:#98a3c4; --accent:#5b8cff;
+  --py:#8b5cf6; --free:#34d399; --warn:#fbbf24; --stop:#f87171; --run:#f97316;
+  --shadow:0 8px 24px rgba(0,0,0,.36);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  overscroll-behavior-y:contain}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+a{color:var(--accent)}
+.wrap{max-width:760px;margin:0 auto;padding:14px 14px 8px}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#0d1120 72%,rgba(13,17,32,0));
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px}
+.hd{max-width:760px;margin:0 auto;display:flex;align-items:flex-start;gap:12px}
+.clock{font-size:34px;font-weight:800;letter-spacing:.5px;line-height:1;font-variant-numeric:tabular-nums}
+.clock small{display:block;font-size:12px;font-weight:600;color:var(--dim);letter-spacing:0;margin-top:6px}
+.hd .who{margin-left:auto;text-align:right;font-size:11px;color:var(--dim);line-height:1.6}
+.hd .who b{color:var(--txt);font-size:12.5px}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 10px;font-size:13px;font-weight:700;color:var(--dim);
+  letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.card h2 .tag{margin-left:auto;font-size:11px;font-weight:600;color:var(--dim);
+  background:#0f1428;border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+.badge{font-size:11px;padding:2px 8px;border-radius:999px;background:#0f1428;
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+
+/* ---------- now / next ---------- */
+.now{background:linear-gradient(135deg,#233060,#1a2140);border-color:#35406b}
+.now .row{display:flex;align-items:baseline;gap:10px}
+.now .big{font-size:20px;font-weight:800;line-height:1.35}
+.now .sub{font-size:12.5px;color:var(--dim);margin-top:4px;line-height:1.6}
+.cd{margin-left:auto;text-align:right}
+.cd .n{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;color:#ffd76a}
+.cd .l{font-size:11px;color:var(--dim)}
+.bar{height:6px;border-radius:99px;background:#0f1428;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#a78bfa);
+  border-radius:99px;transition:width .5s linear}
+
+/* ---------- timeline ---------- */
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed #262e4b;align-items:flex-start}
+.tl li:last-child{border-bottom:0}
+.tl .t{width:92px;flex:0 0 92px;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;padding-top:2px}
+.tl .dot{width:9px;height:9px;border-radius:50%;background:#3a4470;flex:0 0 9px;margin-top:5px}
+.tl .c{flex:1;min-width:0}
+.tl .c b{font-size:14px;font-weight:700;display:block;line-height:1.4}
+.tl .c span{font-size:11.5px;color:var(--dim);display:block;margin-top:2px;line-height:1.5}
+.tl li.done{opacity:.42}
+.tl li.past .t{color:#5d688c}
+.tl li.now{background:linear-gradient(90deg,rgba(91,140,255,.16),transparent);border-radius:10px;
+  margin:0 -8px;padding-left:8px;padding-right:8px}
+.tl li.now .dot{background:var(--accent);box-shadow:0 0 0 4px rgba(91,140,255,.2)}
+.tl li.cls .dot{background:#ffd76a}
+.tl li.py .dot{background:var(--py)}
+.tl li.free .dot{background:var(--free)}
+.tl li.run .dot{background:var(--run)}
+
+/* ---------- week grid ---------- */
+.week{display:grid;grid-template-columns:52px repeat(7,1fr);gap:4px;font-size:10.5px}
+.week .h{color:var(--dim);text-align:center;font-weight:700;padding:2px 0}
+.week .h.today{color:#ffd76a}
+.week .r{color:var(--dim);font-size:9.5px;display:flex;flex-direction:column;
+  justify-content:center;line-height:1.25;padding-left:2px}
+.week .cell{background:#141a2e;border:1px solid #232b47;border-radius:8px;min-height:54px;
+  padding:4px;font-size:9.5px;line-height:1.3;overflow:hidden}
+.week .cell.on{background:#22305c;border-color:#3a4a80}
+.week .cell b{display:block;font-size:10px;font-weight:700}
+.week .cell span{color:#c3ccec;display:block;margin-top:2px}
+.week .cell em{color:#8e99bd;font-style:normal;display:block;font-size:9px;margin-top:2px}
+.week .cell.py{background:#2b2050;border-color:#4c3a85}
+.week .cell.off{background:#0f1428;border-style:dashed;color:#4d5675}
+
+/* ---------- rows / buttons ---------- */
+.rowx{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed #262e4b}
+.rowx:last-child{border-bottom:0}
+.rowx .k{font-size:13px;font-weight:600}
+.rowx .v{margin-left:auto;font-size:12px;color:var(--dim);text-align:right}
+.sw{width:50px;height:29px;border-radius:99px;background:#39406a;position:relative;
+  flex:0 0 50px;transition:.2s;border:0;cursor:pointer}
+.sw i{position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:#fff;
+  transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.sw.on{background:var(--accent)}
+.sw.on i{left:24px}
+.btn{border:1px solid var(--line);background:#1f2740;color:var(--txt);border-radius:11px;
+  padding:10px 13px;font-size:12.5px;font-weight:700;cursor:pointer}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#08122b}
+.btn.ghost{background:transparent}
+.btn.wide{width:100%;display:block;text-align:center;margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line);background:#1f2740;color:var(--txt);border-radius:99px;
+  padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#08122b}
+input[type=time],input[type=date]{background:#0f1428;color:var(--txt);border:1px solid var(--line);
+  border-radius:9px;padding:8px 9px;font-size:13px;font-family:inherit;color-scheme:dark}
+.hint{font-size:11.5px;color:var(--dim);line-height:1.7}
+.hint b{color:#cfd8f7}
+.warnbox{background:#2a2312;border:1px solid #5c4a1c;color:#f4d99b;border-radius:12px;
+  padding:11px 12px;font-size:11.5px;line-height:1.7}
+
+/* ---------- python tracker ---------- */
+.pyday{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed #262e4b}
+.pyday .d{width:44px;flex:0 0 44px;font-size:11.5px;color:var(--dim)}
+.pyday .s{font-size:11px;color:var(--dim);margin-left:auto}
+.chk{width:28px;height:28px;flex:0 0 28px;border-radius:9px;border:1.5px solid #3c4570;
+  background:#141a2e;display:grid;place-items:center;font-size:15px;color:transparent;cursor:pointer}
+.chk.on{background:var(--py);border-color:var(--py);color:#fff}
+
+/* ---------- roadmap ---------- */
+.rm{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;background:#161c31}
+.rm>button{width:100%;display:flex;align-items:center;gap:9px;background:none;border:0;color:var(--txt);
+  padding:11px 12px;font-family:inherit;font-size:12.5px;font-weight:700;text-align:left;cursor:pointer}
+.rm .w{color:#c4b5fd;flex:0 0 52px}
+.rm .st{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--dim)}
+.rm .body{padding:0 12px 12px;font-size:11.5px;color:var(--dim);line-height:1.8;display:none}
+.rm.open .body{display:block}
+.rm .body b{color:#dbe3ff}
+
+/* ---------- bottom nav ---------- */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(13,17,32,.94);
+  backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+nav .in{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+nav button{background:none;border:0;color:var(--dim);font-family:inherit;font-size:11px;
+  font-weight:700;padding:7px 2px;border-radius:11px;cursor:pointer;line-height:1.5}
+nav button i{display:block;font-size:19px;font-style:normal;line-height:1.25}
+nav button.on{color:var(--txt);background:#1d2540}
+
+/* ---------- alert overlay ---------- */
+#veil{position:fixed;inset:0;z-index:90;background:rgba(6,9,18,.9);backdrop-filter:blur(6px);
+  display:none;place-items:center;padding:22px}
+#veil.on{display:grid}
+.alarm{width:100%;max-width:420px;background:linear-gradient(160deg,#233060,#161d36);
+  border:1px solid #3d4a7d;border-radius:22px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.55);
+  animation:pop .28s ease-out}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.alarm .lbl{font-size:11.5px;color:#ffd76a;font-weight:800;letter-spacing:1.5px}
+.alarm .ttl{font-size:25px;font-weight:800;margin:9px 0 4px;line-height:1.3}
+.alarm .tm{font-size:13px;color:#c3ccec;font-variant-numeric:tabular-nums}
+.alarm .ds{font-size:12.5px;color:var(--dim);margin-top:11px;line-height:1.75}
+.alarm .acts{display:flex;gap:9px;margin-top:17px}
+.alarm .acts .btn{flex:1;padding:13px}
+.toast{position:fixed;left:50%;bottom:calc(94px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:#242e50;border:1px solid #3d4a7d;color:var(--txt);font-size:12.5px;font-weight:600;
+  padding:11px 16px;border-radius:12px;z-index:95;box-shadow:var(--shadow);display:none;max-width:88vw;text-align:center}
+.toast.on{display:block}
+.sec-title{font-size:11.5px;color:var(--dim);font-weight:700;margin:2px 0 8px;letter-spacing:.4px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div>
+      <div class="clock"><span id="clock">--:--</span><small id="todayLabel">加载中…</small></div>
+    </div>
+    <div class="who">
+      <b>汤轩旗 · 智能2602</b><br>
+      湖南工学院 · 2026-2027-1<br>
+      <span id="weekLabel">第 -- 周</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ================= 今天 ================= -->
+  <section id="v-today">
+    <div class="card now">
+      <div class="row">
+        <div>
+          <div class="big" id="nowWhat">正在读取作息…</div>
+          <div class="sub" id="nowWhen"></div>
+        </div>
+        <div class="cd"><div class="n" id="cdNum">--</div><div class="l" id="cdLbl">分钟后</div></div>
+      </div>
+      <div class="bar"><i id="cdBar"></i></div>
+    </div>
+
+    <div class="card" id="nextCard" style="display:none">
+      <h2>下一项 <span class="tag" id="nextTag"></span></h2>
+      <div class="big" id="nextWhat" style="font-size:17px"></div>
+      <div class="sub" id="nextWhen" style="font-size:12px;color:var(--dim);margin-top:5px"></div>
+    </div>
+
+    <div class="card" id="runCard">
+      <h2>校园跑 <span class="tag">2 公里 / 次</span></h2>
+      <div class="hint" id="runState">正在读取跑步记录…</div>
+      <div class="bar" style="margin-top:12px"><i id="runBar"></i></div>
+      <button class="btn primary wide" id="btnRunToday">今天跑完了 · 记 2 公里</button>
+      <div class="hint" style="margin-top:10px">
+        有效时段 <b>06:00-07:50</b>，用「运动世界校园」App 记录。占体育课成绩 <b>30%</b>，学期要攒够 <b>80 公里 / 40 次</b>，
+        平均每周 4-5 次；这里只是自己记账，学校成绩以 App 为准。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>今日时间轴 <span class="tag" id="tlTag"></span></h2>
+      <ul class="tl" id="timeline"></ul>
+    </div>
+
+    <div class="card" id="firstRun" style="display:none">
+      <h2>第一次使用 · 30 秒设置</h2>
+      <div class="hint">
+        本应用<b>不需要任何系统权限</b>即可运行：打开着就按时间弹屏提醒、响铃、震动。<br>
+        若希望<b>锁屏/切到别的应用时也能收到系统通知</b>，需要点一次系统的「允许通知」（这是一次性的系统弹窗，任何手机应用都无法跳过）。<br>
+        把页面「添加到主屏幕」后即可当 App 用，断网也能打开。
+      </div>
+      <button class="btn primary wide" id="btnGrant">开启系统通知（可选，一次点击）</button>
+      <button class="btn ghost wide" id="btnSkip">不用系统通知，只在应用内提醒</button>
+    </div>
+  </section>
+
+  <!-- ================= 周课表 ================= -->
+  <section id="v-week" hidden>
+    <div class="card">
+      <h2>一周课表 <span class="tag" id="wkTag"></span></h2>
+      <div class="week" id="weekGrid"></div>
+      <div class="hint" style="margin-top:10px">
+        单元格内为当天该大节的课程；一大节 <b>95 分钟</b>（45 + 10 小课间 + 40），大节之间休息 20 分钟；
+        第一节 <b>08:30</b>、第三节 <b>14:20</b> 上课，晚课 19:00-20:35；每天 21:00-22:00 为 Python 时间；
+        每天早上的 <b>校园跑 2 公里</b>（有效时段 06:00-07:50）。
+        显示的是<b>当前周次</b>实际要上的课（其余周次的课自动隐藏）。
+      </div>
+    </div>
+    <div class="card">
+      <h2>本周提醒清单</h2>
+      <ul class="tl" id="weekReminders"></ul>
+    </div>
+  </section>
+
+  <!-- ================= Python ================= -->
+  <section id="v-py" hidden>
+    <div class="card now">
+      <div class="row">
+        <div>
+          <div class="big" id="pyTheme">今日 Python 主题</div>
+          <div class="sub" id="pyWhen">每天 21:00-22:00 · 30 学 + 20 敲 + 10 记</div>
+        </div>
+        <div class="cd"><div class="n" id="pyDone">0/7</div><div class="l">本周打卡</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>本周打卡 <span class="tag" id="pyWeekTag"></span></h2>
+      <div id="pyDays"></div>
+      <div class="hint" style="margin-top:10px">
+        打卡数据只存在本机，不会上传。进度按<b>学期周次</b>自动分栏，跨周清零。
+      </div>
+    </div>
+    <div class="card">
+      <h2>17 周推进路线图</h2>
+      <div id="roadmap"></div>
+    </div>
+  </section>
+
+  <!-- ================= 设置 ================= -->
+  <section id="v-set" hidden>
+    <div class="card">
+      <h2>提醒方式</h2>
+      <div class="rowx"><div class="k">应用内弹屏提醒<br><span class="hint">打开应用时必定提醒，无需任何权限</span></div>
+        <button class="sw on" data-sw="overlay"><i></i></button></div>
+      <div class="rowx"><div class="k">提示音</div><button class="sw on" data-sw="sound"><i></i></button></div>
+      <div class="rowx"><div class="k">震动</div><button class="sw on" data-sw="vibrate"><i></i></button></div>
+      <div class="rowx"><div class="k">系统通知<br><span class="hint" id="notifState">状态：未开启</span></div>
+        <button class="btn" id="btnNotif">开启</button></div>
+      <div class="rowx"><div class="k">保持屏幕常亮<br><span class="hint">防止后台被系统冻结，耗电略增</span></div>
+        <button class="sw" data-sw="wakelock"><i></i></button></div>
+      <div class="rowx"><div class="k">提前提醒<br><span class="hint">每节课开始前多久提醒</span></div>
+        <div class="chips" id="leadChips">
+          <button class="chip" data-lead="5">5分</button>
+          <button class="chip" data-lead="10">10分</button>
+          <button class="chip" data-lead="15">15分</button>
+        </div></div>
+      <div class="rowx"><div class="k">第 1 小节下课提醒<br><span class="hint">95 分钟里的 10 分钟小课间（45 + 10 + 40）</span></div>
+        <button class="sw on" data-sw="minor"><i></i></button></div>
+    </div>
+
+    <div class="card">
+      <h2>学时基准（一大节 95 分钟）</h2>
+      <div class="rowx"><div class="k">起床</div><input type="time" id="t-wake" value="06:50"></div>
+      <div class="rowx"><div class="k">校园跑开始<br><span class="hint">有效时段 06:00-07:50</span></div><input type="time" id="t-run" value="07:00"></div>
+      <div class="rowx"><div class="k">跑步时长（含热身拉伸）</div>
+        <div class="chips" id="runMinChips">
+          <button class="chip" data-runmin="25">25分</button>
+          <button class="chip" data-runmin="30">30分</button>
+          <button class="chip" data-runmin="35">35分</button>
+        </div></div>
+      <div class="rowx"><div class="k">校园跑提醒<br><span class="hint">关闭后不再提醒跑步</span></div>
+        <button class="sw on" data-sw="run_on"><i></i></button></div>
+      <div class="rowx"><div class="k">第一节课<br><span class="hint">08:30 上课</span></div><input type="time" id="t-p1" value="08:30"></div>
+      <div class="rowx"><div class="k">下午第一节课<br><span class="hint">14:20 上课</span></div><input type="time" id="t-p3" value="14:20"></div>
+      <div class="rowx"><div class="k">大节之间休息</div>
+        <div class="chips" id="gapChips">
+          <button class="chip" data-gap="15">15分</button>
+          <button class="chip" data-gap="20">20分</button>
+          <button class="chip" data-gap="25">25分</button>
+        </div></div>
+      <div class="rowx"><div class="k">晚课开始</div><input type="time" id="t-p9" value="19:00"></div>
+      <div class="rowx"><div class="k">Python 学习</div><input type="time" id="t-py" value="21:00"></div>
+      <div class="rowx"><div class="k">就寝</div><input type="time" id="t-sleep" value="22:30"></div>
+      <div class="rowx"><div class="k">学期第 1 周周一</div><input type="date" id="t-term" value="2026-08-31"></div>
+      <button class="btn ghost wide" id="btnReset">恢复默认时间</button>
+      <div class="hint" style="margin-top:10px" id="clockPreview"></div>
+    </div>
+
+    <div class="card">
+      <h2>怎么装到手机上</h2>
+      <div class="hint">
+        <b>第 1 步（在电脑上）</b>：把 <b>reminder-app</b> 整个文件夹放到手机上，或让手机能访问它。三种办法任选：
+        <br>① 手机上装「文件管理/本地服务器」类 App，直接把文件夹当成本地网页打开（最省事，注意 <b>index.html</b> 要在文件夹根目录）；
+        <br>② 电脑上下载 Node，在文件夹里执行 <b>npx serve .</b>，手机连同一 Wi-Fi 后访问电脑 IP（如 http://192.168.1.5:3000）；
+        <br>③ 上传到任意静态托管（GitHub Pages / Gitee Pages / 内网服务器），手机浏览器打开链接。
+        <br><br>
+        <b>第 2 步（在手机上）</b>：用 Chrome / Edge / 小米浏览器等打开页面 → 菜单里选「<b>添加到主屏幕</b>」→ 桌面出现「作息提醒」图标，点开即用，断网也能打开。
+        <br><br>
+        <b>第 3 步（可选）</b>：第一次打开时页面会提示是否开启系统通知，点一次「允许」；不想开就跳过，应用内提醒照样工作。
+      </div>
+      <button class="btn primary wide" id="btnPwa">检查是否可以安装到桌面</button>
+    </div>
+
+    <div class="card">
+      <h2>说明</h2>
+      <div class="warnbox">
+        <b>关于「权限」：</b>应用本身的提醒（弹屏 + 响铃 + 震动）不需要任何权限。只有<b>锁屏后仍要收到系统通知</b>这一项，
+        必须先由你在系统弹窗里点一次「允许」——这是手机系统的硬性规定，任何软件都无法代替你同意。点过一次之后就不会再问了。
+        <br><br>
+        <b>关于课表：</b>已按你的要求去掉大学英语1（周一 10:25-12:00、周四 14:20-15:55 空出，应用会提示你做作业/自习）。
+        周次来自原课表；如教务有新调整，改 <b>JS 顶部的 SCHEDULE</b> 即可。
+        <br><br>
+        <b>关于上课时间（本次修改）：</b>一大节 <b>95 分钟</b>（45 + 10 小课间 + 40）；第一节 <b>08:30</b> 上课，
+        所以第二节 10:25-12:00；上午两节与下午两节之间休息 <b>20 分钟</b>；第三节（下午第一节）<b>14:20</b> 上课，
+        第四节 16:15-17:50；晚课 19:00-20:35。这些时间都可在本页「学时基准」里改，改完自动重算。
+        <br><br>
+        <b>关于校园跑：</b>已<del>早读</del>改成每天 <b>07:00 校园跑 2 公里</b>（有效时段 06:00-07:50）→ 07:30 洗澡换衣 → 早餐 → 08:10 出门 → 08:30 上课。
+        起床仍是 6:50；若你想跑更早（比如 6:00-6:30），把应用里的「起床」和「校园跑开始」两个时间往前改即可。
+      </div>
+      <button class="btn ghost wide" id="btnTest">测试提醒（立即弹一次）</button>
+      <div class="hint" style="margin-top:10px" id="buildInfo"></div>
+    </div>
+  </section>
+</div>
+
+<div id="veil"><div class="alarm">
+  <div class="lbl" id="alLbl">提醒</div>
+  <div class="ttl" id="alTtl">—</div>
+  <div class="tm" id="alTm">—</div>
+  <div class="ds" id="alDs"></div>
+  <div class="acts">
+    <button class="btn ghost" id="alSnooze">稍后 5 分钟</button>
+    <button class="btn primary" id="alOk">知道了</button>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<nav><div class="in">
+  <button data-v="today" class="on"><i>⏱</i>今天</button>
+  <button data-v="week"><i>🗓</i>周课表</button>
+  <button data-v="py"><i>🐍</i>Python</button>
+  <button data-v="set"><i>⚙️</i>设置</button>
+</div></nav>
+
+<script>
+/* ==========================================================================
+   1. 课表数据（已去掉大学英语1）
+   一大节 95 分钟 = 45 分钟 + 10 分钟小课间 + 40 分钟
+   第一节 08:30 上课、第三节 14:20 上课，大节之间休息 20 分钟
+   实际节次时间由下面的时间轴（T / recalcClock）统一推导
+   ========================================================================== */
+const SEC = {1:'08:30-10:05',2:'10:25-12:00',3:'14:20-15:55',4:'16:15-17:50',5:'19:00-20:35'}; // 仅作初始显示，运行时以 T.SEC 为准
+const SEC_CN = {1:'一',2:'二',3:'三',4:'四',5:'五'};
+const DAYS = ['周一','周二','周三','周四','周五','周六','周日'];
+
+// [课程, 教师, 起周, 止周, 地点, 类别]
+const SCHEDULE = {
+ 1:{ // 周一
+   1:[['画法几何','刘超',7,12,'4309 多媒体','base']],
+   4:[['机械制图','刘超',12,19,'4501 多媒体','base']]
+ },
+ 2:{ // 周二
+   2:[['高等数学（上）','李瑞婷',7,17,'2113 多媒体','base']],
+   3:[['机械制图','刘超',11,18,'4612 多媒体','base']],
+   5:[['学科导论与工程概论','洪悦等8人',9,16,'4210 多媒体','major']]
+ },
+ 3:{ // 周三
+   1:[['画法几何','刘超',6,10,'4408 多媒体','base'],
+      ['心理健康教育','刘伟芳',11,17,'4408 多媒体','soft']],
+   2:[['中国近现代史纲要','刘斌',6,15,'社109 多媒体','pol']],
+   3:[['高等数学（上）','李瑞婷',6,15,'经601 多媒体','base']],
+   4:[['体育1（排球17班）','李春波',6,17,'南区排球场','soft']],
+   5:[['大学日语1','霍辉英',10,17,'外102 多媒体','lang'],
+      ['心理健康教育','刘伟芳',18,18,'大学生成长中心1','soft']]
+ },
+ 4:{ // 周四
+   1:[['高等数学（上）','李瑞婷',6,16,'6215 智慧教室','base']],
+   2:[['人工智能通识','何蕊',6,11,'社101 多媒体','pol']],
+   4:[['画法几何','刘超',6,10,'4508 多媒体','base']],
+   5:[['大学日语1','霍辉英',10,17,'外101 多媒体','lang']]
+ },
+ 5:{ // 周五
+   1:[['中国近现代史纲要','刘斌',6,15,'社508 多媒体','pol']],
+   2:[['人工智能通识','何蕊',8,13,'2411','pol']],
+   4:[['机械制图','刘超',11,18,'4409 多媒体','base']]
+ },
+ 6:{ // 周六：形势与政策，第1-4节连上（08:30-12:00，中间休息 20 分钟）
+   1:[['形势与政策','陈智勇/周小结',8,9,'4408 多媒体','pol',4]]
+ },
+ 7:{}
+};
+
+// 空出的时段（原英语课）——提醒用途
+const FREESLOTS = [
+ {d:1, sec:2, title:'空出时段 · 作业/预习', desc:'原大学英语1 已移除：建议完成周内作业或预习高数、机械制图。'},
+ {d:4, sec:3, title:'空出时段 · 图书馆自习', desc:'原大学英语1 已移除：优先机械制图与高数习题，别并入娱乐时间。'}
+];
+
+/* 默认作息基准（可被用户在设置页覆盖；数值 = 分钟数）
+   一大节 95 分钟 = 45 + 10 小课间 + 40；大节之间休息 20 分钟 */
+const DEF = {
+  t_wake:'06:50', t_run:'07:00', run_min:30, run_on:1,
+  t_p1:'08:30', t_p3:'14:20', t_p9:'19:00',
+  gap:20, inner:10, t_py:'21:00', t_sleep:'22:30', term:'2026-08-31'
+};
+
+/* 作息时间轴：全部由「第一节时间 / 第三大节时间 / 休息时长」推导
+   第一节 08:30 → 第二节 08:30+95+20 = 10:25 → 第三节 14:20（午休固定到 14:20）
+   第四节 14:20+95+20 = 16:15 → 第五大节（晚课）19:00 */
+const T = {};
+function recalcClock(){
+  const dur = 95;
+  const gap = +SET.gap || 20;
+  const inner = +SET.inner || 10;  const p1 = toMin(SET.t_p1);
+  const blocks = [];
+  blocks.push({i:1, big:[p1, p1+45, p1+55, p1+dur]});
+  const p2 = p1 + dur + gap;
+  blocks.push({i:2, big:[p2, p2+45, p2+55, p2+dur]});
+  const p3 = toMin(SET.t_p3);
+  const p4 = p3 + dur + gap;
+  blocks.push({i:3, big:[p3, p3+45, p3+55, p3+dur]});
+  blocks.push({i:4, big:[p4, p4+45, p4+55, p4+dur]});
+  const p5 = toMin(SET.t_p9);
+  blocks.push({i:5, big:[p5, p5+45, p5+55, p5+dur]});
+
+  T.SEC = {};
+  T.PARTS = {};
+  blocks.forEach(b => {
+    T.SEC[b.i] = fromMin(b.big[0]) + '-' + fromMin(b.big[3]);
+    T.PARTS[b.i] = {
+      s: b.big[0], e: b.big[3],
+      minor: [b.big[1], b.big[2]],              // 小课间 10 分钟
+      s2: b.big[2]                              // 第 2 小节开始
+    };
+  });
+  T.gap = [ {s:blocks[0].big[3], e:blocks[1].big[0]},
+            {s:blocks[2].big[3], e:blocks[3].big[0]} ];
+
+  // 作息节点
+  const runS = toMin(SET.t_run);
+  const runE = runS + (+SET.run_min || 30);
+  const p1s = T.PARTS[1].s;
+  T.runS = runS; T.runE = runE;
+  T.shower = [runE, runE + 20];                 // 洗澡换衣 20 分钟
+  T.breakfast = [runE + 20, Math.max(runE + 20, p1s - 20)];  // 早餐，到上课前 20 分钟
+  T.leave = [Math.max(runE + 20, p1s - 20), p1s];            // 去教室
+  T.midE = T.PARTS[2].e;                        // 上午第二大节结束（12:00）
+  T.lunch = [T.midE, T.midE + 30];              // 午餐
+  const napHardEnd = T.PARTS[3].s - 20;         // 必须给"醒神 + 去教室"留 20 分钟
+  T.nap = [T.midE + 30, Math.min(T.midE + 90, napHardEnd)];   // 午睡最长 60 分钟，且不侵占醒神时间
+  T.napWake = [Math.min(T.midE + 90, napHardEnd), T.PARTS[3].s];
+  T.hw = [T.PARTS[4].e, toMin(SET.t_p9) - 20];  // 作业
+  T.dinner = [toMin(SET.t_p9) - 20, toMin(SET.t_p9)];
+  T.night = [22 * 60, 22 * 60 + 30];
+  T.sleep = [toMin(SET.t_sleep), Math.min(toMin(SET.t_sleep) + 30, 23 * 60 + 30)];
+}
+// 注意：recalcClock() 在下面「工具」区之后调用（它用到 toMin / fromMin）
+
+// 固定作息：时间全部按上面的推导结果实时生成
+function routineRows(){
+  const rows = [
+    ['wake',   [toMin(SET.t_wake), T.runS], '起床洗漱', '喝一杯温水，换好跑鞋和运动服，别赖床。', 'fix'],
+    ['run',    [T.runS, T.runE],  '校园跑 2 公里',
+      '06:00-07:50 内有效：打开「运动世界校园」App 记录，热身 3 分钟 → 跑 2 公里 → 拉伸 3 分钟。学期目标 80 公里 / 40 次。', 'run'],
+    ['shower', T.shower, '洗澡换衣', '跑完立刻回宿舍冲澡换衣服，20 分钟内搞定。', 'fix'],
+    ['eaten',  T.breakfast, '早餐', '买个包子鸡蛋边走边吃也行，别省这顿。', 'fix'],
+    ['leave',  T.leave, '出门去教室', '第一节 ' + T.SEC[1] + ' 开始（8:30 上课），带齐教材与笔记本。', 'fix'],
+    ['gap1',   T.gap[0], '大节间休息 20 分钟', '第一节下课：上洗手间、补水、醒醒脑，下一节 ' + T.SEC[2] + ' 开始。', 'free'],
+    ['review', [T.midE, T.midE + 10], '午间复盘', '用 10 分钟整理上午两节课的要点与疑问清单。', 'free'],
+    ['lunch',  T.lunch, '午餐', '按时吃饭，为下午的课留出午睡时间。', 'fix'],
+    ['nap',    T.nap, '午睡', '下午第一节 ' + T.SEC[3] + ' 开始，务必睡一会儿，闹钟定在 ' + fromMin(T.nap[1]) + '。', 'fix'],
+    ['napwake',T.napWake, '醒神 + 去教室', '洗把脸，带好下午的书本和器材。', 'fix'],
+    ['gap2',   T.gap[1], '大节间休息 20 分钟', '第三大节下课，活动一下，下一节 ' + T.SEC[4] + ' 开始。', 'free'],
+    ['hw',     T.hw, '作业时间', '当天作业当天完成，绝不拖到第二天。', 'free'],
+    ['dinner', T.dinner, '晚餐', '清淡少量，避免晚课犯困。', 'fix'],
+    ['night',  T.night, '洗漱 + 复盘', '整理第二天书包，写下今天 3 条收获；顺手看一眼跑步进度（80 公里 / 40 次要攒够）。', 'fix'],
+    ['sleep',  T.sleep, '就寝', '23:00 前上床，保证 7.5 小时以上睡眠。', 'fix']
+  ];
+  return rows.filter(r => r[1][1] > r[1][0]);
+}
+// 固定作息由 routineRows() 实时生成（设置改动后调用 recalcClock() 即可刷新）
+
+// Python 17 周路线图
+const ROADMAP = [
+ [6,'环境 + 变量与数据类型','装 Python/VS Code（30）｜基础运算与输入输出（20）｜语法卡（10）','能写出"输入半径算圆面积"','画法几何：尺寸与角度计算'],
+ [7,'运算符 + 分支 if/elif/else','分支语法（30）｜成绩等级、BMI 判断（20）｜错题笔记（10）','3 个分支小练习','高数：分段函数求值'],
+ [8,'循环 for / while','循环语法（30）｜九九乘法表、累加求和（20）｜流程草图（10）','循环打印图案 3 例','高数：级数求和、迭代'],
+ [9,'列表与元组','列表方法（30）｜成绩录入与排序（20）｜速查表（10）','班级成绩统计小程序','各科：成绩数据整理'],
+ [10,'字典与集合','字典操作（30）｜通讯录、数据去重（20）｜笔记（10）','通讯录（增删查改）','通识：资料分类整理'],
+ [11,'函数与参数','def/参数/返回值（30）｜把旧代码改成函数（20）｜重构笔记（10）','5 个自编函数小库','机械制图：单位换算'],
+ [12,'文件读写 + 异常处理','open/with/编码（30）｜读 CSV 做统计（20）｜笔记（10）','文件版成绩管理器','各科：成绩表批量处理'],
+ [13,'模块、pip 与第三方库','import 机制（30）｜安装并用 1 个库（20）｜环境记录（10）','可复用的 .py 模块','人工智能通识：概念对接'],
+ [14,'NumPy 数值计算','数组与向量化（30）｜矩阵运算、方程求解（20）｜笔记（10）','工程计算小脚本','高数/画法几何：矩阵向量'],
+ [15,'pandas 表格数据处理','DataFrame 基础（30）｜读写 Excel、筛选排序（20）｜笔记（10）','课表/成绩整理脚本','各科：成绩、考勤统计'],
+ [16,'matplotlib 数据可视化','绘图基础（30）｜折线/柱状/散点（20）｜笔记（10）','3 张专业相关图表','学科导论：成果展示'],
+ [17,'小项目（一）：需求与数据','拆模块（30）｜备数据、搭骨架（20）｜需求清单（10）','项目框架 + 数据文件','智能制造：设备数据'],
+ [18,'小项目（二）：实现与调试','写核心逻辑（30）｜调试修 bug（20）｜记录问题（10）','可运行的项目 v1','机械制图：批量计算'],
+ [19,'小项目（三）：封装与展示','整理代码注释（30）｜跑通演示（20）｜写说明（10）','可展示的项目 v2','期末：作为实践成果提交']
+];
+function pyTopic(week){
+  const r = ROADMAP.find(x => x[0] === week);
+  if(r) return r;
+  if(week < 6) return [week,'预备周','装好环境，先跑到 Hello World','—','—'];
+  return [week,'复习 + 补欠账','回看错题笔记（30）｜重做薄弱练习（20）｜更新日志（10）','知识与代码归档','期末周可减量为 30 分钟'];
+}
+
+/* ==========================================================================
+   2. 工具
+   ========================================================================== */
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,'0');
+const toMin = hhmm => { const [h,m] = hhmm.split(':').map(Number); return h*60+m; };
+const fromMin = m => pad(Math.floor(m/60)%24) + ':' + pad(m%60);
+const NOW = () => new Date();
+const todayKey = (d=NOW()) => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'-'+d.getDay();
+
+function store(k, v){
+  try{ if(v === undefined) { const s = localStorage.getItem('sch.'+k); return s ? JSON.parse(s) : null; }
+       localStorage.setItem('sch.'+k, JSON.stringify(v)); }catch(e){ return null; }
+}
+
+// 旧版本设置迁移：v1.1 用的是 08:00 / 14:00 与 t_p5，升级到新基准 08:30 / 14:20
+const savedSet = store('set') || {};
+let migrated = false;
+if(savedSet.t_p1 === '08:00'){ delete savedSet.t_p1; migrated = true; }
+if(savedSet.t_p5 !== undefined){ delete savedSet.t_p5; migrated = true; }
+if(savedSet.t_run === '06:55'){ savedSet.t_run = DEF.t_run; migrated = true; }
+if(migrated) store('set', savedSet);
+
+const SET = Object.assign({
+  overlay:1, sound:1, vibrate:1, wakelock:0, minor:1, lead:10
+}, DEF, savedSet);
+function saveSet(){ store('set', SET); }
+
+const CAT_NAME = {base:'专业基础', major:'专业', pol:'思政通识', lang:'语言', soft:'素质拓展'};
+
+// 学期周次
+function termInfo(now){
+  now = now || NOW();
+  const t0 = new Date(SET.term + 'T00:00:00');
+  if(isNaN(t0)) return {week:1, index:0};
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.floor((day - t0) / 86400000);
+  return {week: Math.floor(days/7) + 1, index: ((day.getDay()+6)%7)};
+}
+const dow = (d=NOW()) => (d.getDay()+6)%7 + 1;   // 1=周一 … 7=周日
+
+// 当天该大节实际要上的课（按周次过滤）
+function coursesAt(d, sec){
+  const list = (SCHEDULE[d] || {})[sec] || [];
+  return list.filter(c => termInfo().week >= c[2] && termInfo().week <= c[3]);
+}
+
+/* ==========================================================================
+   3. 提醒引擎：把课表 + 作息展开成当天的提醒事件
+   ========================================================================== */
+function secRange(sec){
+  const p = T.PARTS[sec];
+  return [p.s, p.e];
+}
+
+function buildEvents(date){
+  const d = ((date.getDay()+6)%7) + 1;
+  const ev = [];
+  const push = (at, title, desc, kind, id, dur) => {
+    ev.push({at, title, desc, kind, id, dur: dur || 30});
+  };
+
+  // a) 作息提醒（时间全部来自 T，改设置即改提醒）
+  push(toMin(SET.t_wake), '起床洗漱', '喝一杯温水，换跑鞋和运动服，准备去操场。', 'fix', 'r-wake');
+  if(SET.run_on){
+    push(T.runS, '校园跑 2 公里', '06:00-07:50 内有效：打开「运动世界校园」App 记录，热身 3 分钟 → 跑 2 公里 → 拉伸 3 分钟。', 'run', 'r-run');
+    push(T.runE, '跑步收尾', '拉伸完回宿舍冲澡换衣服，' + fromMin(T.shower[1]) + ' 前搞定。', 'run', 'r-rundone');
+  }
+  push(toMin(SET.t_run) + (+SET.run_min || 30) + 20, '早餐', '买个包子鸡蛋边走边吃也行，别省这顿。', 'fix', 'r-eaten');
+  push(T.leave[0], '出门去教室', T.SEC[1] + ' 上课，带齐教材与笔记本。', 'fix', 'r-leave');
+  // 第一大节的上课提醒在下面课程循环里统一生成（c1），这里不再重复推送
+  // 大节之间的 20 分钟休息
+  push(T.PARTS[1].e, '大节间休息 20 分钟', '上洗手间、补水、醒醒脑；下一节 ' + T.SEC[2] + ' 开始。', 'free', 'r-gap1');
+  push(T.midE, '上午下课 · 午间复盘', '用 10 分钟整理上午两节课的要点与疑问清单，然后吃午饭。', 'free', 'r-review');
+  push(T.lunch[0], '午餐', '按时吃饭，为下午的课留出午睡时间。', 'fix', 'r-lunch');
+  push(T.nap[0], '午睡', '下午第一节 ' + T.SEC[3] + ' 开始，闹钟定在 ' + fromMin(T.nap[1]) + '。', 'fix', 'r-nap');
+  push(T.napWake[0], '醒神 + 去教室', '洗把脸，带好下午的书本与器材。', 'fix', 'r-napwake');
+  push(T.PARTS[3].e, '第三大节下课 · 休息 20 分钟', '活动一下，下一节 ' + T.SEC[4] + ' 开始。', 'free', 'r-gap2');
+  push(T.PARTS[4].e, '下午下课 · 作业时间', '当天作业当天完成，绝不拖到第二天。', 'free', 'r-hw');
+  push(T.dinner[0], '晚餐', '清淡少量，避免晚课犯困。', 'fix', 'r-din');
+  push(T.night[0], '洗漱 + 复盘', '整理第二天书包，写下今天 3 条收获；顺手看一眼跑步进度。', 'fix', 'r-night');
+  push(T.sleep[0], '准备就寝', '23:00 前上床，保证 7.5 小时睡眠。', 'fix', 'r-sleep');
+
+  // b) 白天的课：提前提醒 + 大节中间小课间（45 + 10 + 40）
+  for(let sec = 1; sec <= 5; sec++){
+    const list = coursesAt(d, sec);
+    if(!list.length) continue;
+    const p = T.PARTS[sec];
+    const head = list.map(c => c[0]).join(' / ');
+    const detail = list.map(c => `${c[0]} · ${c[1]} · ${c[4]}`).join('；');
+
+    if(sec === 1) push(p.s, '第一节课开始', head + '\n' + detail + '\n' + T.SEC[1], 'cls', 'c1');
+    else push(p.s - SET.lead, `准备上课（第${SEC_CN[sec]}大节）`, `${head}\n${detail}\n${T.SEC[sec]}`, 'cls', 'c'+sec);
+
+    // 周六“形势与政策”是 1-4 节连上：数组第 7 位（下标 6）存连堂节数，4 表示连上两节大课，不插小课间
+    const span = list[0][6] || 0;
+    if(SET.minor && span !== 4){
+      push(p.minor[0], `第${SEC_CN[sec]}大节 · 第${sec*2-1}小节下课`, `${head}\n现在是小课间（10 分钟）：换教室、上厕所、喝水，别玩手机。\n第${sec*2}小节 ${fromMin(p.s2)} 开始。`, 'cls', 'm'+sec);
+    }
+  }
+
+  // c) 空出时段（原英语课）
+  FREESLOTS.filter(f => f.d === d).forEach(f => {
+    push(T.PARTS[f.sec].s, f.title, f.desc, 'free', 'f'+f.sec);
+  });
+
+  // d) Python 学习（每天固定）
+  const t = pyTopic(termInfo().week);
+  push(toMin(SET.t_py), 'Python 学习 1 小时', `本周主题：${t[1]}\n今日任务：${t[2]}\n今天产出：${t[3]}`, 'py', 'r-py');
+
+  // e) 防久坐 / 收尾
+  push(T.PARTS[4].s + 90, '起来动一动', '久坐 1 小时了，站起来走 5 分钟。', 'free', 'r-move1');
+  push(20*60+30, '准备洗漱收尾', '再过 1.5 小时就寝，把明天的书装好。', 'free', 'r-move2');
+
+  ev.sort((a,b) => a.at - b.at);
+  return ev.filter(e => e.at >= 0);
+}
+
+// 当前 / 下一项
+function currentAndNext(){
+  const d = dow();
+  const now = NOW();
+  const cur = now.getHours()*60 + now.getMinutes();
+  const items = [];
+
+  // 课程
+  for(let sec = 1; sec <= 5; sec++){
+    const list = coursesAt(d, sec);
+    if(!list.length) continue;
+    const [s,e] = secRange(sec);
+    items.push({s, e, title: list.map(c=>c[0]).join(' / '), sub: list.map(c=>`${c[1]} · ${c[4]}`).join('；'), kind:'cls', tag:'第'+SEC_CN[sec]+'大节 '+T.SEC[sec]});
+  }
+  // 固定作息（跑步项按设置动态计算时长）
+  routineRows().forEach(r => {
+    if(r[0] === 'run' && !SET.run_on) return;
+    items.push({s:r[1][0], e:r[1][1], title:r[2], sub:r[3], kind: r[4] === 'run' ? 'run' : r[4], tag: r[4] === 'run' ? '校园跑' : '作息'});
+  });
+  // Python
+  const t = pyTopic(termInfo().week);
+  items.push({s:toMin(SET.t_py), e:toMin(SET.t_py)+60, title:'Python 学习 1 小时', sub:'本周：'+t[1], kind:'py', tag:'每天固定'});
+  // 空出时段
+  FREESLOTS.filter(f=>f.d===d).forEach(f => {
+    const [s,e] = secRange(f.sec);
+    items.push({s, e, title:f.title, sub:f.desc, kind:'free', tag:'空出'});
+  });
+  // 睡觉
+  items.push({s:toMin(SET.t_sleep), e:23*60, title:'就寝', sub:'23:00 前上床', kind:'fix', tag:'作息'});
+
+  items.sort((a,b) => a.s - b.s);
+  const active = items.filter(i => cur >= i.s && cur < i.e);
+  const next = items.find(i => i.s > cur);
+  return {items, active: active[active.length-1], next, cur};
+}
+
+/* ==========================================================================
+   4. 提醒触发
+   ========================================================================== */
+let firedKey = store('fired') || {};
+let queue = [], showing = false;
+
+function ensurePerm(){
+  if(!('Notification' in window)) return 'unsupported';
+  return Notification.permission;
+}
+function requestPerm(){
+  if(!('Notification' in window)) { toast('此浏览器不支持系统通知，应用内提醒照常工作'); return; }
+  Notification.requestPermission().then(p => { refreshNotifUI(); if(p === 'granted') toast('已开启系统通知'); });
+}
+function refreshNotifUI(){
+  const p = ensurePerm();
+  const map = {granted:'状态：已开启 ✓', denied:'状态：已被系统拒绝（可在浏览器设置里改）', default:'状态：未开启', unsupported:'状态：此浏览器不支持'};
+  $('#notifState').textContent = map[p] || '';
+  $('#btnNotif').textContent = p === 'granted' ? '已开启' : '开启';
+}
+
+let audioCtx = null, audioEl = null;
+function beep(){
+  if(!SET.sound) return;
+  try{
+    if(!audioEl){ audioEl = new Audio('alarm.wav'); audioEl.preload = 'auto'; }
+    audioEl.currentTime = 0;
+    audioEl.play().catch(() => beepFallback());
+  }catch(e){ beepFallback(); }
+}
+function beepFallback(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    [0, .28, .56, .84].forEach((t,i) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = i % 2 ? 880 : 660;
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + t + 0.22);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.24);
+    });
+  }catch(e){}
+}
+function buzz(pattern){ if(SET.vibrate && navigator.vibrate) try{ navigator.vibrate(pattern); }catch(e){} }
+
+function fire(ev, snooze){
+  const label = snooze ? '稍后提醒' : '作息提醒';
+  if(SET.overlay){
+    $('#alLbl').textContent = label + ' · ' + fromMin(ev.at);
+    $('#alTtl').textContent = ev.title;
+    $('#alTm').textContent = '现在 ' + pad(NOW().getHours()) + ':' + pad(NOW().getMinutes());
+    $('#alDs').textContent = ev.desc || '';
+    $('#veil').classList.add('on');
+    $('#veil').dataset.at = ev.at; $('#veil').dataset.title = ev.title; $('#veil').dataset.desc = ev.desc || '';
+    showing = true;
+  }
+  beep(); buzz([260,120,260,120,420]);
+  if(ensurePerm() === 'granted'){
+    try{
+      const n = new Notification(ev.title, {body: ev.desc || '', tag:'sch-'+ev.id+'-'+ev.at, icon:'icon.png', badge:'icon.png', renotify:true});
+      n.onclick = () => { window.focus(); n.close(); };
+    }catch(e){}
+  }
+}
+
+function tick(){
+  const now = NOW();
+  const cur = now.getHours()*60 + now.getMinutes();
+  const key = todayKey(now);
+
+  if(!firedKey[key]) firedKey[key] = {};
+  const today = firedKey[key];
+  const evs = buildEvents(now);
+
+  evs.forEach(ev => {
+    const id = ev.id + '@' + ev.at;
+    if(today[id]) return;
+    if(cur === ev.at && now.getSeconds() < 50){
+      today[id] = 1; store('fired', firedKey);
+      if(!showing) fire(ev);
+    }
+  });
+  // 清理 3 天前的记录
+  Object.keys(firedKey).forEach(k => { if(k !== key) delete firedKey[k]; });
+
+  render(evs);
+}
+
+let snoozeTimer = null;
+
+/* ==========================================================================
+   5. 渲染
+   ========================================================================== */
+function render(evs){
+  const now = NOW(), cur = now.getHours()*60 + now.getMinutes();
+  const {items, active, next} = currentAndNext();
+
+  $('#clock').textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  const wk = termInfo();
+  $('#weekLabel').textContent = `第 ${wk.week} 周 · ${DAYS[wk.index]}`;
+  $('#todayLabel').textContent = `${now.getMonth()+1}月${now.getDate()}日 ${DAYS[wk.index]}`;
+
+  // now / next
+  if(active){
+    $('#nowWhat').textContent = active.title;
+    $('#nowWhen').textContent = `${fromMin(active.s)} - ${fromMin(active.e)} · ${active.tag}${active.sub ? ' · ' + active.sub : ''}`;
+    const left = active.e - cur;
+    $('#cdNum').textContent = left;
+    $('#cdLbl').textContent = '分钟后结束';
+    $('#cdBar').style.width = Math.min(100, Math.max(0, (cur - active.s) / (active.e - active.s) * 100)) + '%';
+  }else{
+    $('#nowWhat').textContent = '自由时间';
+    $('#nowWhen').textContent = next ? `下一项 ${fromMin(next.s)} 开始` : '今天安排已全部结束';
+    $('#cdNum').textContent = next ? next.s - cur : '—';
+    $('#cdLbl').textContent = next ? '分钟后开始' : '';
+    $('#cdBar').style.width = '0%';
+  }
+
+  if(next){
+    $('#nextCard').style.display = '';
+    $('#nextTag').textContent = next.tag;
+    $('#nextWhat').textContent = next.title;
+    $('#nextWhen').textContent = `${fromMin(next.s)} - ${fromMin(next.e)} · ${next.sub || ''}`;
+  }else $('#nextCard').style.display = 'none';
+
+  // 时间轴
+  const tl = $('#timeline');
+  tl.innerHTML = '';
+  const dayEvents = evs.filter(e => ['fix','free','py','cls'].includes(e.kind));
+  $('#tlTag').textContent = evs.filter(e => e.kind === 'cls').length + ' 节课 · ' + evs.length + ' 个提醒';
+  // 合并成"时间段"展示：用 items（含课程/作息/Python/空出）
+  const shown = [...items].sort((a,b) => a.s - b.s);
+  shown.forEach(it => {
+    const li = document.createElement('li');
+    const state = cur >= it.e ? 'done' : (cur >= it.s ? 'now' : '');
+    li.className = [state, it.kind === 'py' ? 'py' : '', it.kind === 'free' ? 'free' : '', it.kind === 'cls' ? 'cls' : '', it.kind === 'run' ? 'run' : ''].join(' ');
+    li.innerHTML = `<div class="t">${fromMin(it.s)}-${fromMin(it.e)}</div><div class="dot"></div>
+      <div class="c"><b>${it.title}</b><span>${it.sub || ''}</span></div>`;
+    tl.appendChild(li);
+  });
+
+  // 周课表
+  if(!$('#v-week').hidden){ renderWeek(); renderWeekReminders(evs); }
+  if(!$('#v-py').hidden) renderPy();
+  renderRun();
+  $('#tlTag').textContent = shown.filter(x => x.kind === 'cls').length + ' 节课 · ' + evs.length + ' 个提醒';
+}
+
+/* 校园跑记账：80 公里 / 40 次为目标 */
+const RUN_GOAL_KM = 80, RUN_GOAL_TIMES = 40, RUN_PER_KM = 2;
+
+function renderRun(){
+  const log = store('run') || {};
+  const keys = Object.keys(log);
+  const times = keys.length;
+  const km = keys.reduce((s, k) => s + (+log[k] || 0), 0);
+  const today = todayKey().slice(0, 10);
+  const doneToday = !!log[today];
+  const st = $('#runState');
+  if(st){
+    const pct = Math.min(100, km / RUN_GOAL_KM * 100);
+    const left = Math.max(0, RUN_GOAL_KM - km);
+    st.innerHTML = '已完成 <b>' + times + '</b> 次 / <b>' + km.toFixed(0) + '</b> 公里（目标 ' + RUN_GOAL_TIMES +
+      ' 次 / ' + RUN_GOAL_KM + ' 公里）<br>还差 <b>' + left + '</b> 公里，约 <b>' + Math.ceil(left / RUN_PER_KM) + '</b> 次' +
+      (doneToday ? '<br><b style="color:#34d399">今天已经跑过了 ✓</b>' : '<br>今天还没跑：' + fromMin(T.runS) + ' 出门，跑完再洗澡吃早餐');
+    const bar = $('#runBar'); if(bar) bar.style.width = pct.toFixed(1) + '%';
+    const btn = $('#btnRunToday');
+    if(btn){
+      btn.textContent = doneToday ? '今天已记录 · 点此撤销' : '今天跑完了 · 记 ' + RUN_PER_KM + ' 公里';
+      btn.onclick = () => {
+        const l = store('run') || {};
+        if(l[today]) delete l[today]; else l[today] = RUN_PER_KM;
+        store('run', l); renderRun(); toast(l[today] ? '已记录 ' + RUN_PER_KM + ' 公里' : '已撤销今天的记录');
+      };
+    }
+  }
+}
+
+function renderWeek(){
+  const g = $('#weekGrid');
+  const wk = termInfo();
+  $('#wkTag').textContent = '第 ' + wk.week + ' 周';
+  let h = '<div class="h"></div>' + DAYS.map((d,i) => `<div class="h ${i+1 === dow() ? 'today' : ''}">${d.slice(1)}</div>`).join('');
+  for(let sec = 1; sec <= 5; sec++){
+    h += `<div class="r"><b>第${SEC_CN[sec]}大节</b>${T.SEC[sec].slice(0,5)}<br>${T.SEC[sec].slice(6)}</div>`;
+    for(let d = 1; d <= 7; d++){
+      const list = coursesAt(d, sec);
+      if(list.length){
+        h += `<div class="cell on"><b>${list.map(c=>c[0]).join('<br>')}</b>` +
+             list.map(c=>`<em>${c[4]}</em>`).join('') + '</div>';
+      }else{
+        const free = FREESLOTS.find(f => f.d === d && f.sec === sec);
+        h += free ? `<div class="cell off">空出<br><em>自习</em></div>` : `<div class="cell off">—</div>`;
+      }
+    }
+  }
+  h += `<div class="r"><b>Python</b>21:00<br>22:00</div>` + DAYS.map(() => `<div class="cell py"><b>Python 1h</b><em>30学 20敲 10记</em></div>`).join('');
+  h += `<div class="r"><b>校园跑</b>${fromMin(T.runS)}<br>2公里</div>` +
+       DAYS.map(() => SET.run_on
+         ? `<div class="cell" style="background:#3a2411;border-color:#7c4a1c"><b style="color:#fdba74">校园跑 2km</b><em style="color:#e8a87c">06:00-07:50 内</em></div>`
+         : `<div class="cell off">—</div>`).join('');
+  g.innerHTML = h;
+}
+
+function renderWeekReminders(evs){
+  const ul = $('#weekReminders');
+  ul.innerHTML = '';
+  evs.forEach(ev => {
+    const li = document.createElement('li');
+    li.className = ev.kind === 'cls' ? 'cls' : (ev.kind === 'py' ? 'py' : (ev.kind === 'free' ? 'free' : ''));
+    li.innerHTML = `<div class="t">${fromMin(ev.at)}</div><div class="dot"></div>
+      <div class="c"><b>${ev.title}</b><span>${(ev.desc||'').replace(/\n/g,' · ')}</span></div>`;
+    ul.appendChild(li);
+  });
+}
+
+function renderPy(){
+  const wk = termInfo().week;
+  const t = pyTopic(wk);
+  $('#pyTheme').textContent = `第 ${wk} 周：${t[1]}`;
+  $('#pyWhen').textContent = `${t[2]}`;
+  $('#pyWeekTag').textContent = '第 ' + wk + ' 周';
+
+  const log = store('py') || {};
+  const key = 'w' + wk;
+  if(!log[key]) log[key] = {};
+  const today = dow();
+  $('#pyDone').textContent = Object.keys(log[key]).length + '/7';
+
+  const box = $('#pyDays');
+  box.innerHTML = '';
+  for(let d = 1; d <= 7; d++){
+    const done = !!log[key][d];
+    const row = document.createElement('div');
+    row.className = 'pyday';
+    row.innerHTML = `<div class="d">${DAYS[d-1]}</div>
+      <div class="chk ${done ? 'on' : ''}">✓</div>
+      <div class="s">${done ? '已完成 1 小时' : (d === today ? '今天待完成' : '未打卡')}</div>`;
+    row.querySelector('.chk').onclick = () => {
+      log[key][d] = !log[key][d]; if(!log[key][d]) delete log[key][d];
+      store('py', log); renderPy();
+    };
+    box.appendChild(row);
+  }
+
+  const rm = $('#roadmap');
+  rm.innerHTML = '';
+  ROADMAP.forEach(([w, title, use, out, link]) => {
+    const d = document.createElement('div');
+    d.className = 'rm' + (w === wk ? ' open' : '');
+    const state = w < wk ? '已完成' : (w === wk ? '进行中' : '未开始');
+    d.innerHTML = `<button><span class="w">第${w}周</span><span>${title}</span><span class="st">${state}</span></button>
+      <div class="body"><b>每天 1 小时：</b>${use}<br><b>本周产出：</b>${out}<br><b>专业结合：</b>${link}</div>`;
+    d.querySelector('button').onclick = () => d.classList.toggle('open');
+    rm.appendChild(d);
+  });
+}
+
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3200);
+}
+
+/* ==========================================================================
+   6. 交互绑定
+   ========================================================================== */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  ['today','week','py','set'].forEach(v => $('#v-' + v).hidden = (v !== b.dataset.v));
+  if(b.dataset.v === 'week') renderWeek();
+  if(b.dataset.v === 'py') renderPy();
+  window.scrollTo({top:0});
+});
+
+document.querySelectorAll('.sw').forEach(sw => {
+  const k = sw.dataset.sw;
+  sw.classList.toggle('on', !!SET[k]);
+  sw.onclick = () => {
+    SET[k] = SET[k] ? 0 : 1; saveSet();
+    sw.classList.toggle('on', !!SET[k]);
+    if(k === 'wakelock') toggleWake();
+    if(k === 'sound' && SET.sound) beep();
+  };
+});
+
+const leadChips = $('#leadChips');
+function paintLead(){ leadChips.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', +c.dataset.lead === +SET.lead)); }
+leadChips.querySelectorAll('.chip').forEach(c => c.onclick = () => { SET.lead = +c.dataset.lead; saveSet(); paintLead(); toast('提前 ' + SET.lead + ' 分钟提醒'); });
+paintLead();
+
+const runChips = $('#runMinChips');
+function paintRunMin(){ runChips.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', +c.dataset.runmin === +SET.run_min)); }
+runChips.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  SET.run_min = +c.dataset.runmin; saveSet(); paintRunMin();
+  toast('跑步按 ' + SET.run_min + ' 分钟安排'); tick();
+});
+paintRunMin();
+
+const gapChips = $('#gapChips');
+function paintGap(){ gapChips.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', +c.dataset.gap === +SET.gap)); }
+gapChips.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  SET.gap = +c.dataset.gap; saveSet(); paintGap(); applyClockChange();
+  toast('大节之间休息 ' + SET.gap + ' 分钟');
+});
+paintGap();
+
+const TIME_FIELDS = [['t_wake','#t-wake'],['t_run','#t-run'],['t_p1','#t-p1'],['t_p3','#t-p3'],
+                     ['t_p9','#t-p9'],['t_py','#t-py'],['t_sleep','#t-sleep'],['term','#t-term']];
+function paintTimeFields(){ TIME_FIELDS.forEach(([k, sel]) => { $(sel).value = SET[k]; }); }
+TIME_FIELDS.forEach(([k, sel]) => {
+  const el = $(sel);
+  el.value = SET[k];
+  el.onchange = () => { SET[k] = el.value; saveSet(); applyClockChange(); toast('已保存并重新计算时间轴'); };
+});
+
+/** 时间基准改了之后：重算时间轴 → 刷新界面 → 重排系统闹钟（APK） */
+function applyClockChange(){
+  recalcClock();
+  paintClockPreview();
+  paintGap(); paintRunMin();
+  // 已发出的提醒白名单清掉，避免同一条提醒因时间变化而漏响
+  store('fired', {}); firedKey = {};
+  tick();
+  try { if(window.XizuoAndroid && window.XizuoAndroid.sync) window.XizuoAndroid.sync(true); } catch(e) {}
+}
+
+/** 把当前时间轴显示在设置页，方便核对 */
+function paintClockPreview(){
+  const box = $('#clockPreview');
+  if(!box) return;
+  let h = '<b>当前时间轴</b>（一大节 95 分钟 = 45 + 10 小课间 + 40；大节间休息 ' + (+SET.gap || 20) + ' 分钟）<br>';
+  [1,2,3,4,5].forEach(i => {
+    const p = T.PARTS[i];
+    const nm = i === 5 ? '晚课（第九、十节）' : '第' + ['一','二','三','四'][i-1] + '大节';
+    h += nm + '：' + T.SEC[i] + '　' + fromMin(p.minor[0]) + '-' + fromMin(p.s2) + ' 小课间<br>';
+  });
+  h += '大节间休息：' + fromMin(T.gap[0].s) + '-' + fromMin(T.gap[0].e) + '（20 分钟）、'
+     + fromMin(T.gap[1].s) + '-' + fromMin(T.gap[1].e) + '（20 分钟）<br>';
+  h += '午餐 ' + fromMin(T.lunch[0]) + '-' + fromMin(T.lunch[1]) + '　午睡 ' + fromMin(T.nap[0]) + '-' + fromMin(T.nap[1])
+     + '　晚餐 ' + fromMin(T.dinner[0]) + '-' + fromMin(T.dinner[1]);
+  box.innerHTML = h;
+}
+
+$('#btnReset').onclick = () => {
+  ['t_wake','t_run','t_p1','t_p3','t_p9','t_py','t_sleep','term','run_min','gap','inner'].forEach(k => delete SET[k]);
+  Object.assign(SET, DEF); saveSet();
+  paintTimeFields(); paintRunMin(); paintGap(); applyClockChange();
+  toast('已恢复默认时间');
+};
+$('#btnNotif').onclick = requestPerm;
+$('#btnGrant').onclick = () => { requestPerm(); store('firstRun', 1); $('#firstRun').style.display = 'none'; };
+$('#btnSkip').onclick = () => { store('firstRun', 1); $('#firstRun').style.display = 'none'; toast('已选择仅应用内提醒'); };
+$('#btnTest').onclick = () => fire({at:NOW().getHours()*60+NOW().getMinutes(), title:'测试提醒', desc:'如果你看到这个弹屏并听到提示音，说明提醒系统工作正常。', id:'test'});
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
+$('#btnPwa').onclick = () => {
+  if(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone){ toast('已经以应用方式运行了'); return; }
+  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; return; }
+  toast('请用浏览器菜单里的「添加到主屏幕 / 安装应用」完成安装');
+};
+
+$('#alOk').onclick = () => { $('#veil').classList.remove('on'); showing = false; };
+$('#alSnooze').onclick = () => {
+  const v = $('#veil');
+  const item = {at:NOW().getHours()*60+NOW().getMinutes() + 5, title:v.dataset.title, desc:v.dataset.desc, id:'snooze'};
+  $('#veil').classList.remove('on'); showing = false;
+  clearTimeout(snoozeTimer);
+  snoozeTimer = setTimeout(() => fire(item, true), 5*60*1000);
+  toast('5 分钟后再次提醒');
+};
+
+// 屏幕常亮
+let wakeLock = null;
+async function toggleWake(){
+  try{
+    if(SET.wakelock){
+      if('wakeLock' in navigator){ wakeLock = await navigator.wakeLock.request('screen'); toast('已开启屏幕常亮'); }
+      else toast('此浏览器不支持屏幕常亮');
+    }else if(wakeLock){ await wakeLock.release(); wakeLock = null; toast('已关闭屏幕常亮'); }
+  }catch(e){ toast('屏幕常亮开启失败：' + e.message); }
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && SET.wakelock) toggleWake(); });
+
+// 页面重新可见时立即补检一次（避免后台被冻结漏掉）
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ tick(); } });
+
+/* ==========================================================================
+   7. 启动
+   ========================================================================== */
+if(!store('firstRun')) $('#firstRun').style.display = '';
+if('serviceWorker' in navigator){
+  Promise.reject(new Error('apk: no sw')).catch(() => {});
+}
+$('#buildInfo').textContent = '版本 2.0 · 单文件离线应用 · 已去英语 · 校园跑 · 一大节 95 分钟（8:30 / 14:20 上课）';
+
+// 首帧渲染 + 每秒检查
+recalcClock();   // 先按设置算好时间轴（toMin/fromMin/SET 都已就绪）
+paintClockPreview();
+tick();
+setInterval(tick, 1000);
+setInterval(() => { if(!showing) tick(); }, 20000);
+window.addEventListener('focus', tick);
+
+// 首次点击时解锁音频上下文（手机浏览器要求先有用户手势才能出声）
+document.addEventListener('click', function unlock(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }catch(e){}
+  document.removeEventListener('click', unlock);
+});
+</script>
+<script src="bridge.js" id="androidBridge"></script>
+</body>
+</html>

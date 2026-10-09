@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">作息提醒</string>
+    <string name="alarm_label">作息提醒</string>
+</resources>

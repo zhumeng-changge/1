@@ -1,0 +1,28 @@
+{
+  "python.defaultInterpreterPath": "D:\\Scripts\\python.exe",
+  "files.encoding": "utf8",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+    "**/android-sdk": true,
+    "**/build/out": true
+  },
+  "search.exclude": {
+    "**/android-sdk": true,
+    "**/build/out": true
+  },
+  "files.associations": {
+    "*.md": "markdown"
+  },
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "[java]": {
+    "editor.tabSize": 4
+  },
+  "[xml]": {
+    "editor.tabSize": 4
+  },
+  "terminal.integrated.env.windows": {
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8"
+  }
+}
